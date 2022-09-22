@@ -91,7 +91,7 @@ func (this *Admin) Handle() {
             }
 
             if userInfo.admin == 1 {
-                if _, err := this.conn.Write([]byte(fmt.Sprintf("\033]0;Loaded: %d | Admin: %d | User: %d | Ongoing %d/1\007", BotCount, database.totalAdmins(), database.totalUsers(), database.runningatk()))); err != nil {
+                if _, err := this.conn.Write([]byte(fmt.Sprintf("\033]0;Loaded: %d | Admin: %d | User: %d | Ongoing %d\007", BotCount, database.totalAdmins(), database.totalUsers(), database.runningatk()))); err != nil {
                     this.conn.Close()
                     break
                 }
